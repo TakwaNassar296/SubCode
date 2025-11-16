@@ -21,7 +21,10 @@ class DailyWorkLogForm
                     ->schema([
                         Select::make('task_id')
                             ->label(__('admin.task'))
-                            ->relationship('task', 'title')
+                            ->options(function () {
+                                $user = auth()->user();
+                                return $user->tasks()->pluck('title', 'id');
+                            })
                             ->required()
                             ->searchable()
                             ->preload(),

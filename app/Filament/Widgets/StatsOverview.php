@@ -9,11 +9,14 @@ use App\Models\Task;
 use App\Models\Problem;
 use App\Models\DailyWorkLog;
 use App\Models\Project;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Spatie\Permission\Models\Role;
 use Carbon\Carbon;
 
 class StatsOverview extends StatsOverviewWidget
 {
+    use HasWidgetShield;
+
     protected static ?int $sort = 1;
     
     protected function getColumns(): int|array|null
@@ -24,7 +27,7 @@ class StatsOverview extends StatsOverviewWidget
     protected function getStats(): array
     {
         $employeeRole = Role::where('name', 'employee')->first();
-        $supervisorRole = Role::where('name', 'supervisor')->first();
+        $supervisorRole = Role::where('name', 'super_admin')->first();
         $managerRole = Role::where('name', 'manager')->first();
 
         return [
@@ -84,7 +87,7 @@ class StatsOverview extends StatsOverviewWidget
                 ->chart($this->getWorkLogChartData())
                 ->extraAttributes(['style' => 'height: 150px']),
 
-            Stat::make(__('المشكلات المفتوحة'), Problem::count())
+            Stat::make(__('المشكلات المفتوحة'), Problem::where('status', 'in_progress')->count())
                 ->description(__('مشكلات تحتاج حل'))
                 ->descriptionIcon('heroicon-o-exclamation-triangle')
                 ->color('danger')
@@ -117,7 +120,7 @@ class StatsOverview extends StatsOverviewWidget
 
     protected function getSupervisorChartData(): array
     {
-        $supervisorRole = Role::where('name', 'supervisor')->first();
+        $supervisorRole = Role::where('name', 'super_admin')->first();
         
         return collect(range(6, 0))
             ->map(function($i) use ($supervisorRole) {

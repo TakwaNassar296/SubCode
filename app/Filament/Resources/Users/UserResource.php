@@ -41,7 +41,7 @@ class UserResource extends Resource
     }
     public static function getNavigationGroup(): string
     {
-        return __('admin.users');
+        return __('admin.team_management');
     }
 
 

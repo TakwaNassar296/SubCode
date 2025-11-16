@@ -20,7 +20,10 @@ class UserInfolist
                         TextEntry::make('email')
                             ->label(__('admin.email')),
                         
-        
+                        TextEntry::make('roles.name')
+                            ->label(__('admin.roles'))
+                            ->separator(', ')
+                            ->wrap(),
 
                     ]),
 

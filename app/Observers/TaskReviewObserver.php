@@ -1,4 +1,4 @@
-<?php
+<?php 
 
 namespace App\Observers;
 
@@ -11,14 +11,17 @@ class TaskReviewObserver
     public function created(TaskReview $taskReview): void
     {
         $reviewer = Auth::user();
-        
         $taskOwner = $taskReview->task->user;
         
         if ($taskOwner) {
             $taskOwner->notify(
                 Notification::make()
-                    ->title('New Task Review')
-                    ->body("Your task '{$taskReview->task->title}' has been reviewed by {$reviewer->name}. Notes: {$taskReview->notes}")
+                    ->title(__('admin.new_task_review'))
+                    ->body(__('admin.new_task_review_body', [
+                        'task' => $taskReview->task->title,
+                        'reviewer' => $reviewer->name,
+                        'notes' => $taskReview->notes,
+                    ]))
                     ->success()
                     ->toDatabase()
             );
@@ -33,12 +36,16 @@ class TaskReviewObserver
             $taskOwner = $taskReview->task->user;
             
             if ($taskOwner) {
-                $ratingText = $taskReview->rating ? "Rating: {$taskReview->rating}/5" : "";
-                
+                $ratingText = $taskReview->rating ? __('admin.rating_text', ['rating' => $taskReview->rating]) : '';
+
                 $taskOwner->notify(
                     Notification::make()
-                        ->title('Task Review Updated')
-                        ->body("Your task '{$taskReview->task->title}' review was updated by {$reviewer->name}. {$ratingText}")
+                        ->title(__('admin.task_review_updated'))
+                        ->body(__('admin.task_review_updated_body', [
+                            'task' => $taskReview->task->title,
+                            'reviewer' => $reviewer->name,
+                            'rating' => $ratingText,
+                        ]))
                         ->info()
                         ->toDatabase()
                 );

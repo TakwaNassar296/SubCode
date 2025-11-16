@@ -10,6 +10,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Actions\ForceDeleteBulkAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
@@ -63,6 +64,17 @@ class TaskReviewsTable
                     RestoreBulkAction::make(),
                     ExportAction::make(),
                 ]),
-            ]);
+            ])->modifyQueryUsing(function (Builder $query) {
+                $user = auth()->user();
+
+                if ($user->hasRole('super_admin') || $user->hasRole('manager')) {
+                    return $query;
+                }
+
+                return $query->whereHas('task', function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                });
+            });
+
     }
 }

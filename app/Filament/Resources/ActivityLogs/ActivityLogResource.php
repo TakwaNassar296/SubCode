@@ -76,4 +76,9 @@ class ActivityLogResource extends Resource
             'edit' => EditActivityLog::route('/{record}/edit'),
         ];
     }
+
+    public static function canAccess(): bool
+    {
+        return auth()->user()->hasRole('super_admin');
+    }
 }

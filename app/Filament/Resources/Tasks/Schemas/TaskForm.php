@@ -18,22 +18,6 @@ class TaskForm
     {
         return $schema
             ->components([
-                Section::make(__('admin.task_information'))
-                    ->schema([
-                        TextInput::make('title')
-                            ->label(__('admin.title'))
-                            ->required()
-                            ->maxLength(255)
-                            ->columnSpanFull(),
-
-                        RichEditor::make('description')
-                            ->label(__('admin.description'))
-                            ->maxLength(1000)
-                            ->columnSpanFull(),
-                    ])
-                    ->columns(2)
-                    ->columnSpanFull(),
-
                 Section::make(__('admin.status_and_due'))
                     ->schema([
                         
@@ -65,7 +49,18 @@ class TaskForm
                     ->schema([
                         Select::make('project_id')
                             ->label(__('admin.project'))
-                            ->relationship('project', 'name')
+                            ->options(function () {
+                                $user = auth()->user();
+                                
+                                if (!$user) {
+                                    return [];
+                                }
+                                $projectIds = $user->projects()->pluck('projects.id');
+                                
+                                return \App\Models\Project::whereIn('id', $projectIds)
+                                    ->pluck('name', 'id')
+                                    ->toArray();
+                            })
                             ->required()
                             ->searchable()
                             ->preload(),
@@ -73,6 +68,23 @@ class TaskForm
                         Hidden::make('user_id')
                             ->default(Auth::id()),
                     ]),
+
+                Section::make(__('admin.task_information'))
+                    ->schema([
+                        TextInput::make('title')
+                            ->label(__('admin.title'))
+                            ->required()
+                            ->maxLength(255)
+                            ->columnSpanFull(),
+
+                        RichEditor::make('description')
+                            ->label(__('admin.description'))
+                            ->maxLength(1000)
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+    
             ]);
     }
 }

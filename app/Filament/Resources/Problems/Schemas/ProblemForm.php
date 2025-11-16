@@ -43,7 +43,7 @@ class ProblemForm
             Section::make(__('admin.resolution'))
                 ->schema([
                    Select::make('solved_by')
-                        ->label(__('admin.solved_by'))
+                        ->label(__('admin.assigned_to'))
                         ->options(
                             User::whereHas('roles', function ($query) {
                                 $query->where('name', 'employee');

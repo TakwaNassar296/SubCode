@@ -19,6 +19,8 @@ class Problem extends Model
         'reported_by',
         'solved_by',
         'solved_at',
+        'status', 
+        'notes',  
     ];
 
     protected $casts = [
@@ -28,7 +30,7 @@ class Problem extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['title', 'description', 'task_id', 'reported_by', 'solved_by', 'solved_at'])
+            ->logOnly(['title', 'description', 'task_id', 'reported_by', 'solved_by', 'solved_at', 'status', 'notes'])
             ->logOnlyDirty();
     }
 

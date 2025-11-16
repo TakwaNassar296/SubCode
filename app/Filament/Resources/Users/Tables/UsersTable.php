@@ -9,6 +9,7 @@ use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
+
 class UsersTable
 {
     public static function configure(Table $table): Table
@@ -24,7 +25,7 @@ class UsersTable
                 ->searchable(),
 
             TextColumn::make('roles.name')
-                ->label(__('admin.assign_roles'))
+                ->label(__('admin.roles'))
                 ->sortable()
                 ->wrap()
                 ->separator(', ')
@@ -46,12 +47,6 @@ class UsersTable
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('role')
-                    ->searchable(),
-                TextColumn::make('github_account')
-                    ->searchable(),
-                TextColumn::make('working_hours')
-                    ->searchable(),
             ])
             ->filters([
                 //

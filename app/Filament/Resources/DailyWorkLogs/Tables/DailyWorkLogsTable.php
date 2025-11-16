@@ -10,6 +10,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Actions\ForceDeleteBulkAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
 
@@ -59,7 +60,16 @@ class DailyWorkLogsTable
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                     ExportAction::make(),
+                    \AlperenErsoy\FilamentExport\Actions\FilamentExportBulkAction::make('export')
                 ]),
-            ]);
+            ]) ->modifyQueryUsing(function (Builder $query) {
+                $user = auth()->user();
+
+                if ($user->hasRole('super_admin') || $user->hasRole('manager')) {
+                    return $query;
+                }
+
+                return $query->where('user_id', $user->id);
+            });
     }
 }

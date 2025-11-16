@@ -3,12 +3,15 @@
 namespace App\Filament\Resources\Tasks\Tables;
 
 use Filament\Tables\Table;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
 
 class TasksTable
@@ -83,13 +86,52 @@ class TasksTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                Action::make('delete_task')
+                    ->label(__('admin.delete_task'))
+                    ->requiresConfirmation()
+                    ->modalHeading(__('admin.delete_task'))
+                    ->modalDescription(__('admin.delete_if_completed'))
+                    ->action(function ($record, Action $action) {
+                        if ($record->status !== 'completed') {
+                            $action->failureNotificationTitle(__('admin.cannot_delete_task'));
+                            return;
+                        }
+
+                        $record->delete();
+                        $action->successNotificationTitle(__('admin.task_deleted'));
+                    }),
               
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                   DeleteBulkAction::make()
+                    ->action(function (Collection $records, DeleteBulkAction $action) {
+                        $recordsToDelete = $records->where('status', 'completed');
+                        $notDeletedCount = $records->where('status', '!=', 'completed')->count();
+
+                        if ($notDeletedCount > 0) {
+                            $action->failureNotificationTitle(__('admin.cannot_delete_task'));
+                        }
+
+                        if ($recordsToDelete->isNotEmpty()) {
+                            $recordsToDelete->each->delete();
+                            $deletedCount = $recordsToDelete->count();
+                            $action->successNotificationTitle(
+                                trans_choice('admin.tasks_deleted', $deletedCount, ['count' => $deletedCount])
+                            );
+                        }
+                    })
+                    ->requiresConfirmation()
+                    ->modalHeading(__('admin.delete_completed_tasks'))
+                    ->modalDescription(__('admin.only_completed_tasks_deleted')),
                     ExportAction::make(),
                 ]),
-            ]);
+            ])->modifyQueryUsing(function (Builder $query) {
+                $user = auth()->user();
+                if ($user->hasRole('super_admin') || $user->hasRole('manager')) {
+                    return $query; 
+                }
+                return $query->where('user_id', $user->id);
+            });
     }
 }

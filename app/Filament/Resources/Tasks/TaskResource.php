@@ -41,7 +41,7 @@ class TaskResource extends Resource
 
     public static function getNavigationGroup(): string
     {
-        return __('admin.users');
+        return __('admin.team_management');
     }
 
     public static function form(Schema $schema): Schema

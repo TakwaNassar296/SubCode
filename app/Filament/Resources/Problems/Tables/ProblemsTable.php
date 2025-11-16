@@ -3,16 +3,21 @@
 namespace App\Filament\Resources\Problems\Tables;
 
 use Filament\Tables\Table;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Filters\Filter;
 use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\Select;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Forms\Components\DateTimePicker;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
 
 class ProblemsTable
@@ -67,6 +72,36 @@ class ProblemsTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+               Action::make('update_status')
+                ->label(__('admin.update_status'))
+                ->icon('heroicon-o-pencil')
+                ->color('warning')
+                ->form([
+                    Select::make('status')
+                        ->label(__('admin.status'))
+                        ->options([
+                            'pending' => __('admin.pending'),
+                            'in_progress' => __('admin.in_progress'),
+                            'solved' => __('admin.solved'),
+                        ])
+                        ->required()
+                        ->default(fn ($record) => $record->status),
+                        
+                    DateTimePicker::make('solved_at')
+                        ->label(__('admin.solved_at'))
+                        ->default(now()),
+                        
+                    Textarea::make('notes')
+                        ->label(__('admin.notes'))
+                        ->rows(3)
+                        ->maxLength(1000),
+                ])
+                ->action(function ($record, array $data) {
+                    $record->update($data);
+                })
+                ->requiresConfirmation()
+                ->modalHeading(__('Update Status'))
+                ->modalDescription(__('Are you sure you want to update the status?')),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -75,6 +110,12 @@ class ProblemsTable
                     RestoreBulkAction::make(),
                     ExportAction::make(),
                 ]),
-            ]);
+            ])->modifyQueryUsing(function ($query) {
+                $user = auth()->user();
+                if ($user->hasRole('super_admin') || $user->hasRole('manager')) {
+                    return $query; 
+                }
+                return $query->where('solved_by', $user->id);
+            });
     }
 }
