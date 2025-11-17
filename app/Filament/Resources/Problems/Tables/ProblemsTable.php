@@ -31,6 +31,18 @@ class ProblemsTable
                 ->searchable()
                 ->limit(50),
 
+                TextColumn::make('status')
+                ->label(__('admin.status'))
+                ->badge()
+                ->color(fn ($state) => match ($state) {
+                    'solved' => 'success',
+                    'in_progress' => 'warning',
+                    'pending' => 'danger',
+                    default => 'gray',
+                })
+                ->sortable()
+                ->formatStateUsing(fn (string $state) => __('admin.' . $state)),
+
             TextColumn::make('reportedBy.name')
                 ->label(__('admin.reported_by'))
                 ->sortable(),

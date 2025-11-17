@@ -38,16 +38,13 @@ class Task extends Model
         static::saved(function ($task) {
             $hasProblem = $task->has_problem ;
             $problemDescription = $task->problem_description ?? null;
-
-
             if ($hasProblem && ! $task->problems()->exists()) {
-
-               
                 Problem::create([
                     'task_id'     => $task->id,
                     'title'       => $task->title,
                     'description' => $problemDescription ?? 'Auto generated problem',
                     'reported_by' => auth()->id(),
+                    'solved_by' => $task->user_id,
                     'status'      => 'pending',
                 ]);
             }

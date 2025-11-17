@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DailyWorkLogs\Schemas;
 
+use App\Models\Task;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Hidden;
@@ -23,6 +24,9 @@ class DailyWorkLogForm
                             ->label(__('admin.task'))
                             ->options(function () {
                                 $user = auth()->user();
+                                 if ($user->hasRole('super_admin')) {
+                                    return Task::pluck('title', 'id'); 
+                                }
                                 return $user->tasks()->pluck('title', 'id');
                             })
                             ->required()

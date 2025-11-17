@@ -2,20 +2,30 @@
 
 namespace App\Filament\Resources\Tasks\Tables;
 
+use Carbon\Carbon;
+use App\Models\Task;
+use App\Models\User;
 use Filament\Tables\Table;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Illuminate\Support\Facades\DB;
+use Filament\Tables\Filters\Filter;
 use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Forms\Components\Checkbox;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Schemas\Components\Section;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\RichEditor;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use Tables\Actions\BulkAction;
 
 class TasksTable
 {
@@ -48,7 +58,8 @@ class TasksTable
                     'in_progress' => 'warning',
                     'completed' => 'success',
                     'needs_review' => 'danger',
-                }),
+                })
+                ->formatStateUsing(fn (string $state) => __('admin.' . $state)),
 
             TextColumn::make('user.name')
                 ->label(__('admin.employee'))
@@ -74,19 +85,49 @@ class TasksTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                 SelectFilter::make('status')
-                ->label(__('admin.status'))
-                ->options([
-                    'pending' => __('admin.pending'),
-                    'in_progress' => __('admin.in_progress'),
-                    'completed' => __('admin.completed'),
-                    'needs_review' => __('admin.needs_review'),
-                ]),
+                    SelectFilter::make('status')
+                        ->options([
+                            'pending' => __('admin.pending'),
+                            'in_progress' => __('admin.in_progress'),
+                            'completed' => __('admin.completed'),
+                            'needs_review' => __('admin.needs_review'),
+                        ])
+                        ->label(__('admin.status_filter')),
 
-            SelectFilter::make('project_id')
-                ->label(__('admin.project'))
-                ->relationship('project', 'name'),
-            ])
+                    SelectFilter::make('user_id')
+                        ->relationship('user', 'name')
+                        ->label(__('admin.user_filter')),
+
+                    SelectFilter::make('project_id')
+                        ->relationship('project', 'name')
+                        ->label(__('admin.project_filter')),
+/*
+Filter::make('created_date')
+    ->form([
+        DatePicker::make('start_date')
+            ->label(__('admin.start_date_filter'))
+            ->default(Carbon::today()),
+
+        DatePicker::make('end_date')
+            ->label(__('admin.end_date_filter'))
+            ->default(Carbon::today()->addDays(7)),
+    ])
+    ->query(function ($query, $data) {
+        if (isset($data['start_date']) && isset($data['end_date'])) {
+            $startDate = Carbon::parse($data['start_date'])->startOfDay();
+            $endDate = Carbon::parse($data['end_date'])->endOfDay();
+            
+            return $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        return $query;
+    })
+    ->label(__('admin.created_date_range_filter')),
+*/
+
+                ], layout: FiltersLayout::AboveContent)
+                ->filtersFormColumns(3)
+
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
@@ -103,7 +144,7 @@ class TasksTable
 
                         $record->delete();
                         $action->successNotificationTitle(__('admin.task_deleted'));
-                    }),
+                    })->visible(fn () => auth()->user()->hasRole('super_admin')),
 
                     Action::make('add_problem')
                         ->label(__('admin.add_problem'))
@@ -129,7 +170,7 @@ class TasksTable
                                 'has_problem' => $data['has_problem'],
                                 'problem_description' => $data['problem_description'] ?? null,
                             ]);
-                        }),
+                        })->visible(fn ($record) => !$record->has_problem && auth()->user()->hasRole('super_admin')),
               
             ])
             ->toolbarActions([
@@ -156,6 +197,8 @@ class TasksTable
                     ->modalDescription(__('admin.only_completed_tasks_deleted')),
                     ExportAction::make(),
                 ]),
+
+                
             ])->modifyQueryUsing(function (Builder $query) {
                 $user = auth()->user();
                 if ($user->hasRole('super_admin') || $user->hasRole('manager')) {
@@ -164,4 +207,8 @@ class TasksTable
                 return $query->where('user_id', $user->id);
             });
     }
+
 }
+
+
+
