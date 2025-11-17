@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Activitylog\Traits\LogsActivity;
+use App\Models\Problem;
 use Spatie\Activitylog\LogOptions;
+use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Task extends Model
 {
@@ -19,12 +20,40 @@ class Task extends Model
         'project_id',
         'user_id',
         'due_date',
-        'link'
+        'link',
+        'has_problem',
+        'problem_description',
     ];
 
     protected $casts = [
         'due_date' => 'date',
+        'has_problem' => 'boolean',
     ];
+
+
+    protected static function booted()
+    {
+        parent::booted();
+
+        static::saved(function ($task) {
+            $hasProblem = $task->has_problem ;
+            $problemDescription = $task->problem_description ?? null;
+
+
+            if ($hasProblem && ! $task->problems()->exists()) {
+
+               
+                Problem::create([
+                    'task_id'     => $task->id,
+                    'title'       => $task->title,
+                    'description' => $problemDescription ?? 'Auto generated problem',
+                    'reported_by' => auth()->id(),
+                    'status'      => 'pending',
+                ]);
+            }
+        });
+    }
+
 
     public function getActivitylogOptions(): LogOptions
     {

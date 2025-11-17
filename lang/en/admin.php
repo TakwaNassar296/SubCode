@@ -151,7 +151,10 @@ return [
 'task_status' => 'Task Status',
 'problem_status' => 'Problem Status',
 'team_management' => 'Team Management',
-
+'task_problem_section' => 'Task Problem',
+'has_problem' => 'This task has a problem',
+'problem_description' => 'Describe the problem',
+'add_problem' => 'Add Problem',
 
 
     

@@ -7,8 +7,11 @@ use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\Toggle;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\RichEditor;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -23,7 +26,8 @@ class TasksTable
                TextColumn::make('title')
                 ->label(__('admin.title'))
                 ->searchable()
-                ->limit(50),
+                ->limit(50)
+                ->toggleable(),
 
 
                 TextColumn::make('description')
@@ -100,6 +104,32 @@ class TasksTable
                         $record->delete();
                         $action->successNotificationTitle(__('admin.task_deleted'));
                     }),
+
+                    Action::make('add_problem')
+                        ->label(__('admin.add_problem'))
+                        ->icon('heroicon-o-exclamation-circle')
+                        ->form([
+                            Section::make(__('admin.task_problem_section'))
+                                ->schema([
+                                    Toggle::make('has_problem')
+                                        ->label(fn () => __('admin.has_problem'))
+                                        ->reactive(),
+
+                                    RichEditor::make('problem_description')
+                                        ->label(fn () => __('admin.problem_description'))
+                                        ->hidden(fn (callable $get) => !$get('has_problem')),
+                                ])
+                                ->collapsible()
+                                ->columns(1)
+                                ->columnSpanFull(),
+                        ])
+                        ->visible(fn ($record) => !$record->has_problem)
+                        ->action(function ($record, array $data) {
+                            $record->update([
+                                'has_problem' => $data['has_problem'],
+                                'problem_description' => $data['problem_description'] ?? null,
+                            ]);
+                        }),
               
             ])
             ->toolbarActions([

@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources\Tasks\Schemas;
 
+use App\Models\Project;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -47,17 +49,21 @@ class TaskForm
 
                 Section::make(__('admin.project_assignment'))
                     ->schema([
-                        Select::make('project_id')
+                       Select::make('project_id')
                             ->label(__('admin.project'))
                             ->options(function () {
-                                $user = auth()->user();
-                                
+                                $user = Auth::user();
+
                                 if (!$user) {
                                     return [];
                                 }
+
+                                if ($user->hasRole('super_admin')) {
+                                    return Project::pluck('name', 'id')->toArray();
+                                }
+
                                 $projectIds = $user->projects()->pluck('projects.id');
-                                
-                                return \App\Models\Project::whereIn('id', $projectIds)
+                                return Project::whereIn('id', $projectIds)
                                     ->pluck('name', 'id')
                                     ->toArray();
                             })
@@ -84,6 +90,21 @@ class TaskForm
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
+
+                    Section::make(__('admin.task_problem_section'))
+                    ->schema([
+                        Toggle::make('has_problem')
+                            ->label(fn () => __('admin.has_problem'))
+                            ->reactive(),
+
+                        RichEditor::make('problem_description')
+                            ->label(fn () => __('admin.problem_description'))
+                            ->hidden(fn (callable $get) => !$get('has_problem')),
+                    ])
+                    ->collapsible()
+                    ->columns(1)
+                    ->columnSpanFull(),
+
     
             ]);
     }

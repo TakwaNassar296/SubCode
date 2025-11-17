@@ -146,6 +146,9 @@ return [
     'task_status' => 'حالة المهام',
     'problem_status' => 'حالة المشاكل',
     'team_management' => 'إدارة الفريق',
-
+    'task_problem_section' => 'مشكلة المهمة',
+    'has_problem' => 'هذه المهمة بها مشكلة',
+    'problem_description' => 'وصف المشكلة',
+    'add_problem' => 'إضافة مشكلة',
 
 ];
